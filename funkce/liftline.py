@@ -14,6 +14,7 @@ class Parametry:
     """
 
     def __init__(self, data_kridla: str):
+        """ Definovani parametru a prazdnych listu."""
         with open(data_kridla) as self.data_kridla:
             konst = json.load(self.data_kridla)
         
@@ -35,15 +36,17 @@ class Parametry:
         self.Y = []
 
 class Liftline(Parametry):
-    #nacteni vstupnich dat
+    """Trida Liftline, vypocita hodnoty cy_kr a Y, vypise je, ulozi, vykresli grafy a ulozi je"""
     def __init__(self, parametry):
         self.parametry = parametry
 
-    def nacteni_dat(self, jmeno1, jmeno2):
+    def nacteni_dat(self, jmeno1: str, jmeno2: str):
+        """nacteni vstupnich dat"""
         self.data_koren = np.loadtxt(jmeno1, delimiter=',')
         self.data_konec = np.loadtxt(jmeno2, delimiter=',')
 
     def vypocet_cy(self):
+        """Vypocet hodnot cy"""
         indexy_koren = np.nonzero(np.isin(self.data_koren[:,0], self.parametry.alfainf_koren))
         self.cy_koren = self.data_koren[indexy_koren, 1]
         indexy_konec = np.nonzero(np.isin(self.data_konec[:,0], self.parametry.alfainf_konec))
@@ -51,6 +54,7 @@ class Liftline(Parametry):
 
     def funkce_liftline(self, m, b_koren, b_konec, cy_koren, cy_koren_1, cy_konec, cy_konec_1,\
                          alfainf_koren, alfainf_konec, alfa0_koren, alfa0_konec, l):
+        """Samotna funkce liftline"""
         #vektor uhlu teta (rovnomerne rozdeleni 90/m-90 stupnu)
         self.teta = np.linspace(np.pi/(2*m), np.pi/2, m)
         #vzdalenost od korene, kde budou jednotlive rezy kridla (b)
@@ -93,6 +97,7 @@ class Liftline(Parametry):
         self.A = np.linalg.solve(matice, vektor)
 
     def vypocet_liftline(self):
+        """Provede vypocet liftline."""
         self.parametry.cy_kr = []
         self.parametry.Y = []
         self.vypocet_cy()
@@ -107,6 +112,7 @@ class Liftline(Parametry):
             self.parametry.Y.append(self.Y_uloz)
 
     def Y_gamma_fce(self):
+        """Vypocita hodnoty Y_gamma a provede zrcadleni tohoto pole"""
         #vypocet cirkulace pro profil
         soucet = np.zeros((self.parametry.m, 1))
         gamma = np.zeros((self.parametry.m, 1))
@@ -119,7 +125,7 @@ class Liftline(Parametry):
         self.druhapulka = self.Y_gamma[::-1]
 
     def vykresleni(self):
-        #vykresleni rozlozeni vztlaku na kridle
+        """Vykresli graf rozlozeni vztlaku"""
         self.vypocet_cy()
         for i in range(self.parametry.j):
             self.vypocet_liftline()
@@ -131,7 +137,7 @@ class Liftline(Parametry):
             plt.ylabel('Hodnota vztlaku')
 
     def vypsani_hodnot(self):
-        #vypise hodnoty cy_kr a Y
+        """Vypise hodnoty cy_kr a Y"""
         self.vypocet_liftline()
         print(f"{self.parametry.nazev}")
         for i in range(self.parametry.j):
@@ -139,12 +145,12 @@ class Liftline(Parametry):
             print(f"Vztlak: {self.parametry.Y[i]}")
         
     def ulozeni_grafu(self, path):
-        #ulozeni grafu do pdf souboru
+        """Ulozeni grafu do pdf souboru"""
         for i in range(self.parametry.j):
             plt.savefig(path + f'Rozlozeni vztlaku, {self.parametry.nazev}, alfainf_koren = {self.parametry.alfainf_koren[i]}°.pdf')
 
-    #ulozeni do csv
-    def ulozeni_dat(self, cesta):
+    def ulozeni_dat(self, cesta: str):
+        """Ulozeni do csv"""
         self.vypocet_liftline()
         np.savetxt(cesta + f'cy_kr_{self.parametry.nazev}.csv', self.parametry.cy_kr)
         np.savetxt(cesta + f'Y_{self.parametry.nazev}.csv', self.parametry.Y)
